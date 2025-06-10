@@ -1,0 +1,4 @@
+.venv
+uploaded_images
+__pycache__
+models/
