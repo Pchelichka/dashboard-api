@@ -1,0 +1,23 @@
+{
+  "roll_ff": 1500,
+  "roll_pid_constants": [
+    [0, 0, 0],
+    [0, 0, 0],
+    [0, 0, 0]
+  ],
+  "pitch_ff": 1500,
+  "pitch_pid_constants": [
+    [0, 0, 0],
+    [0, 0, 0],
+    [0, 0, 0]
+  ],
+  "throttle_ff": 1500,
+  "throttle_pid_constants": [
+    [0, 0, 0],
+    [0, 0, 0],
+    [0, 0, 0]
+  ],
+  "yaw_ff": 1500,
+  "yaw_pid_constants": [[0, 0, 0]],
+  "code": "arm\ndly 3\ndisarm"
+}

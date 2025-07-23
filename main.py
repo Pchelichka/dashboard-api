@@ -1,5 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
+import json
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
@@ -10,6 +12,8 @@ import uuid
 import tensorflow as tf
 import numpy as np
 from PIL import Image
+from tensorflow.keras.preprocessing import image
+from tensorflow.keras.applications.inception_resnet_v2 import preprocess_input
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -22,17 +26,18 @@ async def lifespan(app: FastAPI):
         if not os.path.isfile(file_path) or not filename.lower().endswith((".jpg", ".jpeg", ".png")):
             continue
 
+        # check if already in db
         if any(img["filename"] == filename for img in image_store):
             continue
 
         try:
-            img = Image.open(file_path).convert("RGB")
-            img = img.resize((224, 224))
-            img_array = np.array(img) / 255.0
-            img_array = np.expand_dims(img_array, axis=0)
+            img = image.load_img(file_path, target_size=(299, 299))
+            img_array = image.img_to_array(img)
+            img_array = preprocess_input(img_array)  # Use InceptionResNetV2 preprocessing
+            img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
 
             prediction = model.predict(img_array)
-            predicted_class = "NOK" if prediction[0][0] > 0.5 else "OK"
+            predicted_class = "OK" if prediction[0][0] > 0.5 else "NOK"
 
             image_store.append({"filename": filename, "result": predicted_class})
             print(f"Loaded {filename} - {predicted_class}")
@@ -65,6 +70,43 @@ image_store = []
 
 class ImageResult(BaseModel):
     url: str
+
+CONFIG_PATH = "configurations/config.json"  # Path to custom config file
+DEFAULT_CONFIG_PATH = "configurations/default.json"  # Path to default config file
+
+# Load configuration from file
+def load_config():
+    if not os.path.exists(CONFIG_PATH):
+        # Default configuration structure
+        with open(DEFAULT_CONFIG_PATH, "r") as f:
+            default_config = json.load(f)
+            with open(CONFIG_PATH, "w") as f2:
+                json.dump(default_config, f2, indent=2)
+            return default_config
+    with open(CONFIG_PATH, "r") as f:
+        return json.load(f)
+
+# Save configuration to file
+def save_config(config_data: dict):
+    with open(CONFIG_PATH, "w") as f:
+        json.dump(config_data, f, indent=2)
+
+@app.get("/config")
+async def get_config():
+    try:
+        config = load_config()
+        return config
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/config")
+async def update_config(new_config: dict):
+    try:
+        # Optionally: validate fields here
+        save_config(new_config)
+        return JSONResponse(content={"message": "Configuration updated."})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 

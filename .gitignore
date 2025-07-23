@@ -2,3 +2,5 @@
 uploaded_images
 __pycache__
 models/
+configurations/*
+!configurations/default.json
