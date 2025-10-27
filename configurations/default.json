@@ -19,5 +19,12 @@
   ],
   "yaw_ff": 1500,
   "yaw_pid_constants": [[0, 0, 0]],
-  "code": "arm\ndly 3\ndisarm"
+  "code": "arm\ndly 3\ndisarm",
+  "manual": {
+    "pitch": false,
+    "roll": false,
+    "throttle": false,
+    "yaw": false,
+    "mode": false
+  }
 }
